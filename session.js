@@ -1,5 +1,5 @@
 // ---- Session tracking. Set SESSION_ENDPOINT to your Apps Script web-app URL (write-only). Empty = local only.
-const SESSION_ENDPOINT='';
+const SESSION_ENDPOINT='https://script.google.com/macros/s/AKfycbzdO8_9QW4J9Mq7sSuqB7YOsjEkN6PMYmawnyBvn-blZw4EgaCyjzB4HKigx5WP3-oD/exec';
 const SK='poc_sessions_v1',SC='poc_session_cur',SN='poc_player';
 const S={cur:null,
  name(){return localStorage.getItem(SN)||''},
