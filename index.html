@@ -18,8 +18,11 @@ h1{margin:12px 0 2px;font-size:30px;letter-spacing:1px;background:linear-gradien
 .row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0;padding:4px;border-radius:12px;background:#140404;border:1px solid #5a1010;transition:.3s;position:relative}
 .row.active{box-shadow:0 0 0 3px #ffd34d,0 0 18px #ffb800aa}
 .row.dead .mult,.row.dead .cell:not(:has(.bomb)){filter:grayscale(1) brightness(.4)}
-.row.dead .tile.bomb{font-size:40px;background:radial-gradient(circle,#ffe28a 0%,#ff7a1a 35%,#c8141f 65%,#3a0000 100%);border:2px solid #ffd34d;box-shadow:0 0 18px 4px #ff5a1aee,0 0 34px 8px #ffd34d66;position:relative;z-index:2;animation:boom .6s,glow 1s ease-in-out infinite alternate}
+.row.dead .face.back .tile.bomb{width:100%;height:100%}
+.tile.bomb{font-size:40px;background:radial-gradient(circle,#ffe28a 0%,#ff7a1a 35%,#c8141f 65%,#3a0000 100%);border:2px solid #ffd34d;box-shadow:0 0 18px 4px #ff5a1aee,0 0 34px 8px #ffd34d66;position:relative;z-index:2;animation:boom .6s,glow 1s ease-in-out infinite alternate}
 @keyframes glow{to{box-shadow:0 0 26px 8px #ff7a1a,0 0 44px 12px #ffd34d88}}
+.row.lost{filter:grayscale(1) brightness(.45);opacity:.55;box-shadow:none!important;transition:filter .5s,opacity .5s}
+.row.lost .coin{box-shadow:none}
 .row.won{box-shadow:0 0 0 2px #d4a73a}
 .row.dead::after{content:'💥 BUSTED';position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);z-index:3;background:#c8141f;border:1px solid #ffd34d;border-radius:8px;padding:1px 8px;font-weight:900;font-size:11px;color:#ffe28a;letter-spacing:1px}
 .mult{display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;color:#ffd34d;font-size:14px;background:#5a0a10;border-radius:8px;border:1px solid #d4a73a88}

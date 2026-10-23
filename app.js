@@ -18,25 +18,30 @@ const sfx={flip:()=>tone(320,.08,'triangle',.08,0,640),coin:()=>{tone(988,.08,'s
 const board=$('board');
 board.innerHTML=[0,1,2,3].map(r=>`<div class="row" id="row${r}">${[0,1,2,3].map(c=>`<div class="cell" id="c${r}${c}"><div class="tile idle"></div></div>`).join('')}</div>`).join('');
 const SYM={blank:'<div class="tile blank"></div>',bomb:'<div class="tile bomb">💣</div>',door:'<div class="tile doorimg"><span class="knob"></span></div>'};
-const RANDS=['blank','bomb','door','door','blank','door'];
-function clearBoard(){for(let r=0;r<4;r++){$('row'+r).className='row';for(let c=0;c<4;c++)$('c'+r+c).innerHTML='<div class="tile idle"></div>';}}
+const RANDS=['blank','door','door','blank','door','door'];
+function clearBoard(){for(let r=0;r<4;r++){$('row'+r).className='row';for(let c=0;c<4;c++){const e=$('c'+r+c);e.className='cell';e.innerHTML='<div class="tile idle"></div>';}}}
 function kind(cell){return cell.bomb?'bomb':cell.pay?'door':'blank';}
 async function revealRow(r){const x=M.rollRow(rand,g.pot,r,g.denom);$('row'+r).classList.add('active');
- for(let c=0;c<4;c++){const strip=[...Array(12)].map((_,i)=>SYM[RANDS[(i+c*2)%RANDS.length]]).join('');
-  $('c'+r+c).innerHTML=`<div class="spinwin"><div class="strip" style="animation-duration:${.25+c*.03}s">${strip}${strip}</div></div>`;}
+ for(let c=0;c<4;c++){const e=$('c'+r+c);e.className='cell';const strip=[...Array(12)].map((_,i)=>SYM[RANDS[(i+c*2)%RANDS.length]]).join('');
+  e.innerHTML=`<div class="spinwin"><div class="strip" style="animation-duration:${.25+c*.03}s">${strip}${strip}</div></div>`;}
  await sleep(T(500));
+ // land: coins AND bombs land as identical closed doors; blanks stay blank
  for(let c=0;c<4;c++){const cell=x.cells[c],k=kind(cell),e=$('c'+r+c);
-  e.innerHTML=k==='door'?`<div class="flip"><div class="face front">${SYM.door}</div><div class="face back"><div class="coin">${money(cell.pay)}</div></div></div>`:SYM[k];
+  e.innerHTML=k==='blank'?SYM.blank:`<div class="flip"><div class="face front">${SYM.door}</div><div class="face back">${k==='bomb'?SYM.bomb:`<div class="coin">${money(cell.pay)}</div>`}</div></div>`;
   e.classList.add('landed');setTimeout(()=>e.classList.remove('landed'),300);
-  if(k==='bomb'){sfx.boom();navigator.vibrate&&navigator.vibrate([200,60,200]);}else sfx.stop();await sleep(T(300));}
- if(!x.bomb){await sleep(T(200));for(let c=0;c<4;c++){const e=$('c'+r+c);if(e.querySelector('.flip')){e.classList.add('open');sfx.flip();await sleep(T(120));sfx.coin();await sleep(T(120));}}}
+  if(k!=='blank')window.__landedDoors=(window.__landedDoors||0)+1;sfx.stop();await sleep(T(300));}
+ // test hook: no door may be open before every reel in the row has stopped
+ if([...$('row'+r).querySelectorAll('.cell')].some(e=>e.classList.contains('open')))window.__doorViolations=(window.__doorViolations||0)+1;
+ await sleep(T(250));
+ for(let c=0;c<4;c++){const e=$('c'+r+c);if(!e.querySelector('.flip'))continue;e.classList.add('open');sfx.flip();await sleep(T(140));
+  if(x.cells[c].bomb){sfx.boom();navigator.vibrate&&navigator.vibrate([200,60,200]);}else sfx.coin();await sleep(T(120));}
  $('row'+r).classList.remove('active');return x;}
 // ---- game flow ----
 function canBet(){return st.bals[st.di]+1e-9>=BET(D[st.di]);}
 async function startGame(){g={phase:'busy',row:-1,pot:BET(D[st.di]),denom:D[st.di]};st.bals[st.di]=r2(st.bals[st.di]-BET(g.denom));save();clearBoard();$('msg').textContent='';ui();}
 const r2=v=>Math.round(v*100)/100;
 async function playRow(){g.phase='busy';ui();const r=g.row+1;const x=await revealRow(r);g.row=r;
- if(x.bomb){$('row'+r).classList.add('dead');board.classList.add('shake');setTimeout(()=>board.classList.remove('shake'),400);
+ if(x.bomb){$('row'+r).classList.add('dead');for(let i=0;i<r;i++)$('row'+i).classList.add('lost');board.classList.add('shake');setTimeout(()=>board.classList.remove('shake'),400);
   $('msg').textContent=`💥 Bomb! Lost ${money(g.pot)}`;g.pot=0;g.phase='idle';ui();return false;}
  const riding=g.pot;g.pot=r2(g.pot+x.win);$('row'+r).classList.add('won');
  $('msg').textContent=x.win?`Row ${r+1} won ${money(x.win)} · ${money(g.pot)} riding`:`Row ${r+1}: no coins · ${money(g.pot)} riding`;
