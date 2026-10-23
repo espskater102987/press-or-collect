@@ -41,7 +41,7 @@ async function revealRow(r){const x=M.rollRow(rand,g.pot,r,g.denom);$('row'+r).c
  $('row'+r).classList.remove('active');return x;}
 // ---- game flow ----
 function canBet(){return st.bals[st.di]+1e-9>=BET(D[st.di]);}
-async function startGame(){g={phase:'busy',row:-1,pot:BET(D[st.di]),denom:D[st.di]};st.bals[st.di]=r2(st.bals[st.di]-BET(g.denom));save();clearBoard();$('msg').textContent='';ui();}
+async function startGame(){window.__stats&&(window.__stats.games++,window.__stats.bets=Math.round((window.__stats.bets+BET(D[st.di]))*100)/100);g={phase:'busy',row:-1,pot:BET(D[st.di]),denom:D[st.di]};st.bals[st.di]=r2(st.bals[st.di]-BET(g.denom));save();clearBoard();$('msg').textContent='';ui();}
 const r2=v=>Math.round(v*100)/100;
 async function playRow(){g.phase='busy';ui();const r=g.row+1;const x=await revealRow(r);g.row=r;
  if(x.bomb){$('row'+r).classList.add('dead');for(let i=0;i<r;i++)$('row'+i).classList.add('lost');board.classList.add('shake');setTimeout(()=>board.classList.remove('shake'),400);
@@ -49,27 +49,38 @@ async function playRow(){g.phase='busy';ui();const r=g.row+1;const x=await revea
  const riding=g.pot;g.pot=r2(g.pot+x.win);$('row'+r).classList.add('won');
  $('msg').textContent=x.win?`Row ${r+1} won ${money(x.win)} · ${money(g.pot)} riding`:`Row ${r+1}: no coins · ${money(g.pot)} riding`;
  if(r===M.ROWS-1){collect();return false;}g.phase=g.auto?'busy':'won';ui();return true;}
-function collect(){if(g.pot>0){st.bals[st.di]=r2(st.bals[st.di]+g.pot);save();celebrate(g.pot);$('msg').textContent=`Collected ${money(g.pot)}!`;}g.pot=0;g.phase='idle';ui();}
-async function onSpin(){if(g.phase==='busy')return;if(g.phase==='won')collect();if(!canBet()){$('msg').textContent='Out of spins at this denom — tap Reset all';return;}
+function collect(){window.__stats&&(window.__stats.collected=Math.round((window.__stats.collected+g.pot)*100)/100);if(g.pot>0){st.bals[st.di]=r2(st.bals[st.di]+g.pot);save();celebrate(g.pot);$('msg').textContent=`Collected ${money(g.pot)}!`;}g.pot=0;g.phase='idle';ui();}
+async function onSpin(){if(g.phase==='busy'||auto.running)return;if(g.phase==='won')collect();if(!canBet()){$('msg').textContent='Out of spins at this denom — tap Reset all';return;}
  await startGame();await playRow();}
-async function onPress(){if(g.phase!=='won')return;await playRow();}
-async function onMax(){if(g.phase!=='idle'||!canBet())return;await startGame();g.auto=true;while(await playRow()){await sleep(T(350));}}
+async function onPress(){if(g.phase!=='won'||auto.running)return;await playRow();}
+async function onMax(){if(g.phase!=='idle'||!canBet()||auto.running)return;await startGame();g.auto=true;while(await playRow()){await sleep(T(350));}}
 function celebrate(amt){const big=amt>=BET(g.denom)*5;$('big').textContent=(big?'BIG WIN! ':'')+'+'+money(amt);$('big').classList.remove('show');void $('big').offsetWidth;$('big').classList.add('show');sfx.collect();
  for(let i=0;i<(big?70:20);i++){const c=document.createElement('div');c.className='confetti';c.style.left=Math.random()*100+'vw';c.style.background=`hsl(${Math.random()*360},90%,60%)`;c.style.animationDuration=1.5+Math.random()*1.5+'s';document.body.appendChild(c);setTimeout(()=>c.remove(),3200);}}
 // ---- ui ----
 $('dens').innerHTML=D.map(d=>`<button class="den">${money(d)}<b class=bt>bet $${BET(d)}</b><i></i></button>`).join('');
 const dens=[...document.querySelectorAll('.den')];
-dens.forEach((b,i)=>b.onclick=()=>{if(g.phase!=='idle')return;st.di=i;save();clearBoard();$('msg').textContent=`${money(D[i])} denom · bet $${BET(D[i])} per game`;tone(600,.05);ui();});
+dens.forEach((b,i)=>b.onclick=()=>{if(g.phase!=='idle'||auto.running)return;st.di=i;save();clearBoard();$('msg').textContent=`${money(D[i])} denom · bet $${BET(D[i])} per game`;tone(600,.05);ui();});
 function ui(){const b=st.bals[st.di],idle=g.phase==='idle';$('bal').textContent=money(b);$('pot').textContent=money(g.pot);
  $('mute').textContent=st.muted?'🔇':'🔊';dens.forEach((e,i)=>{e.classList.toggle('on',i===st.di);e.disabled=!idle;e.querySelector('i').textContent=money(st.bals[i]);});
  $('spin').disabled=g.phase==='busy'||(idle&&!canBet());$('spin').textContent=g.phase==='won'?'COLLECT & SPIN':`SPIN $${BET(D[st.di])}`;$('max').textContent=`MAX PRESS $${BET(D[st.di])}`;$('betlbl').textContent=money(BET(D[st.di]));
  $('press').disabled=g.phase!=='won';$('press').textContent=g.phase==='won'?'PRESS':'PRESS';$('max').disabled=!idle||!canBet();
- $('reset').disabled=g.phase==='busy';}
+ $('reset').disabled=g.phase==='busy';
+ const A=auto.running;if(A){$('spin').disabled=$('press').disabled=$('max').disabled=$('reset').disabled=true;dens.forEach(e=>e.disabled=true);}
+ $('auto').textContent=A?(auto.stop?`STOPPING… ${auto.left}`:`STOP · ${auto.left} left`):`AUTO ${auto.count}`;$('auto').classList.toggle('run',A);
+ $('auto').disabled=!A&&(g.phase!=='idle'||!canBet());$('autoDn').disabled=A||auto.count<=10;$('autoUp').disabled=A||auto.count>=100;}
+// ---- autospin: N games, row 1 only, never press, auto-collect, 0.5s between games ----
+const auto={count:10,left:0,running:false,stop:false};
+async function runAuto(){if(auto.running){auto.stop=true;ui();return;}if(g.phase!=='idle'||!canBet())return;
+ auto.running=true;auto.stop=false;auto.left=auto.count;ui();
+ while(auto.left>0&&!auto.stop&&canBet()){await startGame();await playRow();if(g.phase==='won')collect();auto.left--;ui();if(auto.left>0&&!auto.stop)await sleep(T(500));}
+ const why=!canBet()&&auto.left>0?'Auto stopped: not enough for the bet':auto.stop?'Auto stopped':'Auto finished';
+ auto.running=false;auto.stop=false;auto.left=0;ui();setTimeout(()=>{if(!auto.running&&g.phase==='idle')$('msg').textContent=why;},T(900));}
+$('auto').onclick=runAuto;$('autoDn').onclick=()=>{auto.count=Math.max(10,auto.count-10);ui();};$('autoUp').onclick=()=>{auto.count=Math.min(100,auto.count+10);ui();};
 $('spin').onclick=onSpin;$('press').onclick=onPress;$('max').onclick=onMax;
 $('mute').onclick=()=>{st.muted=!st.muted;save();ui();};
-$('reset').onclick=()=>{if(g.phase==='busy')return;if(confirm('Reset all four bankrolls to 100 spins each?')){st.bals=fresh().bals;g={phase:'idle',row:-1,pot:0,denom:D[st.di]};clearBoard();save();ui();$('msg').textContent='Bankrolls restored';}};
+$('reset').onclick=()=>{if(g.phase==='busy'||auto.running)return;if(confirm('Reset all four bankrolls to 100 spins each?')){st.bals=fresh().bals;g={phase:'idle',row:-1,pot:0,denom:D[st.di]};clearBoard();save();ui();$('msg').textContent='Bankrolls restored';}};
 $('helpBtn').onclick=()=>{const d=D[st.di];$('helpbet').textContent=`${money(d)} denom: each game costs $${BET(d)} (four times the denom).`;$('help').classList.add('show');};
 document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();onSpin();}});
 if('serviceWorker' in navigator&&!FAST)navigator.serviceWorker.register('sw.js');
-window.__game={get st(){return st},get g(){return g},onSpin,onPress,onMax,collect};
+window.__game={auto,runAuto,get st(){return st},get g(){return g},onSpin,onPress,onMax,collect};
 ui();
