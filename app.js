@@ -26,16 +26,17 @@ async function revealRow(r){const x=M.rollRow(rand,g.pot,r,g.denom);$('row'+r).c
  for(let c=0;c<4;c++){const e=$('c'+r+c);e.className='cell';const strip=[...Array(12)].map((_,i)=>SYM[RANDS[(i+c*2)%RANDS.length]]).join('');
   e.innerHTML=`<div class="spinwin"><div class="strip" style="animation-duration:${.25+c*.03}s">${strip}${strip}</div></div>`;}
  await sleep(T(500));
+ window.__firstFlip=null;
  // land: coins AND bombs land as identical closed doors; blanks stay blank
  for(let c=0;c<4;c++){const cell=x.cells[c],k=kind(cell),e=$('c'+r+c);
   e.innerHTML=k==='blank'?SYM.blank:`<div class="flip"><div class="face front">${SYM.door}</div><div class="face back">${k==='bomb'?SYM.bomb:`<div class="coin">${money(cell.pay)}</div>`}</div></div>`;
   e.classList.add('landed');setTimeout(()=>e.classList.remove('landed'),300);
-  if(k!=='blank')window.__landedDoors=(window.__landedDoors||0)+1;sfx.stop();await sleep(T(300));}
+  if(k!=='blank')window.__landedDoors=(window.__landedDoors||0)+1;sfx.stop();if(c===3)window.__lastStop=performance.now();else await sleep(T(300));}
  // test hook: no door may be open before every reel in the row has stopped
  if([...$('row'+r).querySelectorAll('.cell')].some(e=>e.classList.contains('open')))window.__doorViolations=(window.__doorViolations||0)+1;
  // Kyle: pause half the row's spin length (initial spin + 4 staggered stops) before doors open
- window.__landed=true;await sleep((T(500)+4*T(300))/2*0.3); // Kyle: reveal at 30% (850ms -> 255ms)window.__landed=false;
- for(let c=0;c<4;c++){const e=$('c'+r+c);if(!e.querySelector('.flip'))continue;e.classList.add('open');sfx.flip();await sleep(T(42));
+ window.__landed=true;await sleep(T(100)); // Kyle: first door opens 0.1s after the last reel stopswindow.__landed=false;
+ for(let c=0;c<4;c++){const e=$('c'+r+c);if(!e.querySelector('.flip'))continue;if(window.__firstFlip==null)window.__firstFlip=performance.now();e.classList.add('open');sfx.flip();await sleep(T(42));
   if(x.cells[c].bomb){sfx.boom();navigator.vibrate&&navigator.vibrate([200,60,200]);}else sfx.coin();await sleep(T(DOOR_FLIP_MS-42));} // next door starts only after this flip (200ms) finishes
  $('row'+r).classList.remove('active');return x;}
 // ---- game flow ----
