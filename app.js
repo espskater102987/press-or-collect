@@ -49,11 +49,12 @@ async function playRow(){g.phase='busy';ui();const r=g.row+1;const x=await revea
  const riding=g.pot;g.pot=r2(g.pot+x.win);$('row'+r).classList.add('won');
  $('msg').textContent=x.win?`Row ${r+1} won ${money(x.win)} · ${money(g.pot)} riding`:`Row ${r+1}: no coins · ${money(g.pot)} riding`;
  if(r===M.ROWS-1){collect();return false;}g.phase=g.auto?'busy':'won';ui();return true;}
-function collect(){window.__stats&&(window.__stats.collected=Math.round((window.__stats.collected+g.pot)*100)/100);if(g.pot>0){st.bals[st.di]=r2(st.bals[st.di]+g.pot);save();celebrate(g.pot);$('msg').textContent=`Collected ${money(g.pot)}!`;}g.pot=0;g.phase='idle';ui();}
+function collect(){window.__stats&&(window.__stats.collected=Math.round((window.__stats.collected+g.pot)*100)/100,(window.__stats.cr=window.__stats.cr||[]).push(g.row));if(g.pot>0){st.bals[st.di]=r2(st.bals[st.di]+g.pot);save();celebrate(g.pot);$('msg').textContent=`Collected ${money(g.pot)}!`;}g.pot=0;g.phase='idle';ui();}
 async function onSpin(){if(g.phase==='busy'||auto.running)return;if(g.phase==='won')collect();if(!canBet()){$('msg').textContent='Out of spins at this denom — tap Reset all';return;}
  await startGame();await playRow();}
 async function onPress(){if(g.phase!=='won'||auto.running)return;await playRow();}
-async function onMax(){if(g.phase!=='idle'||!canBet()||auto.running)return;await startGame();g.auto=true;while(await playRow()){await sleep(T(350));}}
+async function playMaxGame(){await startGame();g.auto=true;while(await playRow()){await sleep(T(350));}}
+async function onMax(){if(g.phase!=='idle'||!canBet()||auto.running)return;await playMaxGame();}
 function celebrate(amt){const big=amt>=BET(g.denom)*5;$('big').textContent=(big?'BIG WIN! ':'')+'+'+money(amt);$('big').classList.remove('show');void $('big').offsetWidth;$('big').classList.add('show');sfx.collect();
  for(let i=0;i<(big?70:20);i++){const c=document.createElement('div');c.className='confetti';c.style.left=Math.random()*100+'vw';c.style.background=`hsl(${Math.random()*360},90%,60%)`;c.style.animationDuration=1.5+Math.random()*1.5+'s';document.body.appendChild(c);setTimeout(()=>c.remove(),3200);}}
 // ---- ui ----
@@ -66,16 +67,16 @@ function ui(){const b=st.bals[st.di],idle=g.phase==='idle';$('bal').textContent=
  $('press').disabled=g.phase!=='won';$('press').textContent=g.phase==='won'?'PRESS':'PRESS';$('max').disabled=!idle||!canBet();
  $('reset').disabled=g.phase==='busy';
  const A=auto.running;if(A){$('spin').disabled=$('press').disabled=$('max').disabled=$('reset').disabled=true;dens.forEach(e=>e.disabled=true);}
- $('auto').textContent=A?(auto.stop?`STOPPING… ${auto.left}`:`STOP · ${auto.left} left`):`AUTO ${auto.count}`;$('auto').classList.toggle('run',A);
- $('auto').disabled=!A&&(g.phase!=='idle'||!canBet());$('autoDn').disabled=A||auto.count<=10;$('autoUp').disabled=A||auto.count>=100;}
+ $('auto').textContent=A?(auto.stop?`STOPPING ${auto.left}`:`STOP · ${auto.left}`):`AUTO ${auto.count}`;$('auto').classList.toggle('run',A);
+ $('auto').disabled=!A&&(g.phase!=='idle'||!canBet());$('autoDn').disabled=A||auto.count<=10;['spin','max'].forEach(m=>{const e=$('mode-'+m);e.classList.toggle('on',auto.mode===m);e.disabled=A;});$('autoUp').disabled=A||auto.count>=100;}
 // ---- autospin: N games, row 1 only, never press, auto-collect, 0.5s between games ----
-const auto={count:10,left:0,running:false,stop:false};
+const auto={count:10,left:0,running:false,stop:false,mode:'spin'};
 async function runAuto(){if(auto.running){auto.stop=true;ui();return;}if(g.phase!=='idle'||!canBet())return;
  auto.running=true;auto.stop=false;auto.left=auto.count;ui();
- while(auto.left>0&&!auto.stop&&canBet()){await startGame();await playRow();if(g.phase==='won')collect();auto.left--;ui();if(auto.left>0&&!auto.stop)await sleep(T(500));}
+ while(auto.left>0&&!auto.stop&&canBet()){if(auto.mode==='max')await playMaxGame();else{await startGame();await playRow();}if(g.phase==='won')collect();auto.left--;ui();if(auto.left>0&&!auto.stop)await sleep(T(500));}
  const why=!canBet()&&auto.left>0?'Auto stopped: not enough for the bet':auto.stop?'Auto stopped':'Auto finished';
  auto.running=false;auto.stop=false;auto.left=0;ui();setTimeout(()=>{if(!auto.running&&g.phase==='idle')$('msg').textContent=why;},T(900));}
-$('auto').onclick=runAuto;$('autoDn').onclick=()=>{auto.count=Math.max(10,auto.count-10);ui();};$('autoUp').onclick=()=>{auto.count=Math.min(100,auto.count+10);ui();};
+$('auto').onclick=runAuto;$('mode-spin').onclick=()=>{auto.mode='spin';ui();};$('mode-max').onclick=()=>{auto.mode='max';ui();};$('autoDn').onclick=()=>{auto.count=Math.max(10,auto.count-10);ui();};$('autoUp').onclick=()=>{auto.count=Math.min(100,auto.count+10);ui();};
 $('spin').onclick=onSpin;$('press').onclick=onPress;$('max').onclick=onMax;
 $('mute').onclick=()=>{st.muted=!st.muted;save();ui();};
 $('reset').onclick=()=>{if(g.phase==='busy'||auto.running)return;if(confirm('Reset all four bankrolls to 100 spins each?')){st.bals=fresh().bals;g={phase:'idle',row:-1,pot:0,denom:D[st.di]};clearBoard();save();ui();$('msg').textContent='Bankrolls restored';}};
