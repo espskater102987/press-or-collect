@@ -33,9 +33,9 @@ async function revealRow(r){const x=M.rollRow(rand,g.pot,r,g.denom);$('row'+r).c
  // test hook: no door may be open before every reel in the row has stopped
  if([...$('row'+r).querySelectorAll('.cell')].some(e=>e.classList.contains('open')))window.__doorViolations=(window.__doorViolations||0)+1;
  // Kyle: pause half the row's spin length (initial spin + 4 staggered stops) before doors open
- window.__landed=true;await sleep((T(500)+4*T(300))/2);window.__landed=false;
- for(let c=0;c<4;c++){const e=$('c'+r+c);if(!e.querySelector('.flip'))continue;e.classList.add('open');sfx.flip();await sleep(T(140));
-  if(x.cells[c].bomb){sfx.boom();navigator.vibrate&&navigator.vibrate([200,60,200]);}else sfx.coin();await sleep(T(120));}
+ window.__landed=true;await sleep((T(500)+4*T(300))/2*0.3); // Kyle: reveal at 30% (850ms -> 255ms)window.__landed=false;
+ for(let c=0;c<4;c++){const e=$('c'+r+c);if(!e.querySelector('.flip'))continue;e.classList.add('open');sfx.flip();await sleep(T(42));
+  if(x.cells[c].bomb){sfx.boom();navigator.vibrate&&navigator.vibrate([200,60,200]);}else sfx.coin();await sleep(T(36));}
  $('row'+r).classList.remove('active');return x;}
 // ---- game flow ----
 function canBet(){return st.bals[st.di]+1e-9>=BET(D[st.di]);}
