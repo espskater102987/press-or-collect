@@ -21,6 +21,7 @@ const SYM={blank:'<div class="tile blank"></div>',bomb:'<div class="tile bomb">ð
 const RANDS=['blank','door','door','blank','door','door'];
 function clearBoard(){for(let r=0;r<4;r++){$('row'+r).className='row';for(let c=0;c<4;c++){const e=$('c'+r+c);e.className='cell';e.innerHTML='<div class="tile idle"></div>';}}}
 function kind(cell){return cell.bomb?'bomb':cell.pay?'door':'blank';}
+const DOOR_FLIP_MS=200;
 async function revealRow(r){const x=M.rollRow(rand,g.pot,r,g.denom);$('row'+r).classList.add('active');
  for(let c=0;c<4;c++){const e=$('c'+r+c);e.className='cell';const strip=[...Array(12)].map((_,i)=>SYM[RANDS[(i+c*2)%RANDS.length]]).join('');
   e.innerHTML=`<div class="spinwin"><div class="strip" style="animation-duration:${.25+c*.03}s">${strip}${strip}</div></div>`;}
@@ -35,7 +36,7 @@ async function revealRow(r){const x=M.rollRow(rand,g.pot,r,g.denom);$('row'+r).c
  // Kyle: pause half the row's spin length (initial spin + 4 staggered stops) before doors open
  window.__landed=true;await sleep((T(500)+4*T(300))/2*0.3); // Kyle: reveal at 30% (850ms -> 255ms)window.__landed=false;
  for(let c=0;c<4;c++){const e=$('c'+r+c);if(!e.querySelector('.flip'))continue;e.classList.add('open');sfx.flip();await sleep(T(42));
-  if(x.cells[c].bomb){sfx.boom();navigator.vibrate&&navigator.vibrate([200,60,200]);}else sfx.coin();await sleep(T(36));}
+  if(x.cells[c].bomb){sfx.boom();navigator.vibrate&&navigator.vibrate([200,60,200]);}else sfx.coin();await sleep(T(DOOR_FLIP_MS-42));} // next door starts only after this flip (200ms) finishes
  $('row'+r).classList.remove('active');return x;}
 // ---- game flow ----
 function canBet(){return st.bals[st.di]+1e-9>=BET(D[st.di]);}
