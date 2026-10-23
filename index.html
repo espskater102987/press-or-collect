@@ -77,6 +77,9 @@ table{width:100%;border-collapse:collapse}td,th{padding:5px;text-align:center;bo
 .confetti{position:fixed;top:-20px;width:10px;height:14px;z-index:7;pointer-events:none;animation:fall linear forwards}
 @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
 .foot{font-size:10px;opacity:.5;margin:8px 0 6px;text-align:center}
+.row2 button{padding:8px 9px!important;font-size:12px!important}.row2 .sb{border-color:#d4a73a88!important;color:#ffd34d!important}#pname{display:inline-block;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+#nameIn{width:100%;box-sizing:border-box;height:46px;border-radius:12px;border:2px solid #d4a73a;background:#0d0d0d;color:#ffd34d;font-size:18px;padding:0 14px;outline:none}
+.namecard h2{color:#ffd34d}#nameOk{background:linear-gradient(#c8102e,#7a0010)!important;color:#ffd34d!important;border:2px solid #d4a73a!important;font-weight:900}
 </style></head><body>
 <h1>PRESS or COLLECT</h1><div class="sub">Free-play test build · test credits only · no real money</div>
 <div class="top"><div class="pill"><small>BALANCE</small><span id="bal">$0</span></div>
@@ -88,7 +91,7 @@ table{width:100%;border-collapse:collapse}td,th{padding:5px;text-align:center;bo
 <div class="dens" id="dens"></div>
 <div class="btns"><button id="spin">SPIN</button><button id="press" disabled>PRESS</button><button id="max">MAX PRESS</button></div>
 <div class="autobar"><div class="seg"><button id="mode-spin" class="on">AUTO SPIN</button><button id="mode-max">AUTO MAX</button></div><button id="autoDn" aria-label="fewer auto spins">−10</button><button id="auto">AUTO 10</button><button id="autoUp" aria-label="more auto spins">+10</button></div>
-<div class="row2"><button id="helpBtn">How to play</button><button id="reset">Reset all</button></div>
+<div class="row2"><button id="helpBtn">How to play</button><button id="reset">Reset all</button><button id="playerBtn" class="sb">👤 <span id="pname">Player</span></button><button id="endBtn" class="sb">End session</button></div>
 <div class="foot">Test credits have no cash value and can't be bought or redeemed.<br>100 games per denom · switching denom switches bankroll.</div>
 <div class="modal" id="help"><div class="card"><h2 style="margin-top:0">How to play</h2>
 <p id="helpbet"></p>
@@ -101,5 +104,7 @@ table{width:100%;border-collapse:collapse}td,th{padding:5px;text-align:center;bo
 <button class="iconbtn" style="width:100%;height:44px" onclick="help.classList.remove('show')">Close</button></div></div>
 <div class="big" id="big"></div>
 <script src="press-config.js"></script>
+<div class="modal" id="nameModal"><div class="card namecard"><h2 style="margin-top:0">Who's playing?</h2><p>Enter your name so Kyle can see your test session results.</p><input id="nameIn" maxlength="30" placeholder="Your name" autocomplete="nickname"><button id="nameOk" class="iconbtn" style="width:100%;height:44px;margin-top:12px">Let's play</button></div></div>
+<script src="session.js"></script>
 <script src="app.js"></script>
 </body></html>
