@@ -32,7 +32,8 @@ async function revealRow(r){const x=M.rollRow(rand,g.pot,r,g.denom);$('row'+r).c
   if(k!=='blank')window.__landedDoors=(window.__landedDoors||0)+1;sfx.stop();await sleep(T(300));}
  // test hook: no door may be open before every reel in the row has stopped
  if([...$('row'+r).querySelectorAll('.cell')].some(e=>e.classList.contains('open')))window.__doorViolations=(window.__doorViolations||0)+1;
- await sleep(T(250));
+ // Kyle: pause half the row's spin length (initial spin + 4 staggered stops) before doors open
+ window.__landed=true;await sleep((T(500)+4*T(300))/2);window.__landed=false;
  for(let c=0;c<4;c++){const e=$('c'+r+c);if(!e.querySelector('.flip'))continue;e.classList.add('open');sfx.flip();await sleep(T(140));
   if(x.cells[c].bomb){sfx.boom();navigator.vibrate&&navigator.vibrate([200,60,200]);}else sfx.coin();await sleep(T(120));}
  $('row'+r).classList.remove('active');return x;}
