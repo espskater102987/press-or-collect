@@ -43,7 +43,7 @@ async function revealRow(r){const x=M.rollRow(rand,g.pot,r,g.denom);$('row'+r).c
 function canBet(){return st.bals[st.di]+1e-9>=BET(D[st.di]);}
 async function startGame(){window.__stats&&(window.__stats.games++,window.__stats.bets=Math.round((window.__stats.bets+BET(D[st.di]))*100)/100);g={phase:'busy',row:-1,pot:BET(D[st.di]),denom:D[st.di]};st.bals[st.di]=r2(st.bals[st.di]-BET(g.denom));save();S.bet(g.denom,BET(g.denom));clearBoard();$('msg').textContent='';ui();}
 const r2=v=>Math.round(v*100)/100;
-async function playRow(){g.phase='busy';ui();const r=g.row+1;const x=await revealRow(r);g.row=r;
+async function playRow(){g.phase='busy';ui();const r=g.row+1;S.ride(g.pot);const x=await revealRow(r);g.row=r;
  if(x.bomb){$('row'+r).classList.add('dead');for(let i=0;i<r;i++)$('row'+i).classList.add('lost');board.classList.add('shake');setTimeout(()=>board.classList.remove('shake'),400);
   $('msg').textContent=`💥 Bomb! Lost ${money(g.pot)}`;g.pot=0;g.phase='idle';ui();return false;}
  const riding=g.pot;g.pot=r2(g.pot+x.win);$('row'+r).classList.add('won');

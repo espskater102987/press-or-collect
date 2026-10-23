@@ -5,10 +5,11 @@ const S={cur:null,
  name(){return localStorage.getItem(SN)||''},
  hist(){try{return JSON.parse(localStorage.getItem(SK))||[]}catch(e){return[]}},
  persist(){if(S.cur)localStorage.setItem(SC,JSON.stringify(S.cur));else localStorage.removeItem(SC);},
- start(name){S.cur={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),name,start:new Date().toISOString(),end:null,coinSizes:[],games:0,coinIn:0,won:0,net:0};S.persist();},
+ start(name){S.cur={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),name,start:new Date().toISOString(),end:null,coinSizes:[],games:0,totalCoinIn:0,initialCoinIn:0,won:0,net:0};S.persist();},
  ensure(){if(!S.cur&&S.name())S.start(S.name());return S.cur;},
- bet(denom,amt){const c=S.ensure();if(!c)return;c.games++;c.coinIn=Math.round((c.coinIn+amt)*100)/100;if(!c.coinSizes.includes(denom))c.coinSizes.push(denom);c.coinSizes.sort((a,b)=>a-b);c.net=Math.round((c.won-c.coinIn)*100)/100;S.persist();},
- win(amt){const c=S.ensure();if(!c)return;c.won=Math.round((c.won+amt)*100)/100;c.net=Math.round((c.won-c.coinIn)*100)/100;S.persist();},
+ bet(denom,amt){const c=S.ensure();if(!c)return;c.games++;c.initialCoinIn=Math.round((c.initialCoinIn+amt)*100)/100;if(!c.coinSizes.includes(denom))c.coinSizes.push(denom);c.coinSizes.sort((a,b)=>a-b);c.net=Math.round((c.won-c.initialCoinIn)*100)/100;S.persist();},
+ ride(amt){const c=S.ensure();if(!c)return;c.totalCoinIn=Math.round((c.totalCoinIn+amt)*100)/100;S.persist();},// riding on each row spun
+ win(amt){const c=S.ensure();if(!c)return;c.won=Math.round((c.won+amt)*100)/100;c.net=Math.round((c.won-c.initialCoinIn)*100)/100;S.persist();},
  end(reason){const c=S.cur;if(!c)return null;S.cur=null;S.persist();if(!c.games)return null;// skip empty sessions
   c.end=new Date().toISOString();c.reason=reason;c.ua=navigator.userAgent.slice(0,120);
   const h=S.hist();h.push(c);localStorage.setItem(SK,JSON.stringify(h.slice(-200)));
